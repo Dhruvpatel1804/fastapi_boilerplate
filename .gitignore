@@ -3,9 +3,6 @@ env
 .env.*
 transcribe.json
 .transcribe.json
-README.md
-Dockerfile
-docker-compose.yml
 .vscode
 webhook_samples/
 *.bak
