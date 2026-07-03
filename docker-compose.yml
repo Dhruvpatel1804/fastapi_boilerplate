@@ -1,32 +1,20 @@
-services:
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: app_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d app_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+# PostgreSQL runs outside Docker (local install or remote server).
+# Set DATABASE_URL in .env to point at that instance.
+#
+# Image name and version — single source of truth for CI build/push and server deploy.
+# Update repository and tag here only; CI runs: docker compose build && docker compose push
 
+services:
   api:
+    image: your-dockerhub-username/fastapi-boilerplate:1.0.0
     build: .
+    pull_policy: always
     ports:
       - "8000:8000"
     env_file:
       - .env
-    depends_on:
-      db:
-        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: >
       sh -c "pipenv run alembic upgrade head &&
              pipenv run uvicorn app.main:app --host 0.0.0.0 --port 8000"
-
-volumes:
-  postgres_data:

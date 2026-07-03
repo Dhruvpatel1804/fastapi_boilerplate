@@ -30,7 +30,8 @@ tests/                  # pytest suite
 
 - Python 3.12
 - [Pipenv](https://pipenv.pypa.io/)
-- Docker & Docker Compose (optional)
+- PostgreSQL (local install or remote server — **not** bundled in Docker)
+- Docker (optional, for running the API container only)
 
 ### Local Development
 
@@ -41,10 +42,12 @@ tests/                  # pytest suite
    pipenv install --dev
    ```
 
-2. **Start PostgreSQL**
+2. **Configure PostgreSQL**
 
-   ```bash
-   docker compose up -d db
+   Install and start PostgreSQL on your machine, or use a remote server. Create a database and set `DATABASE_URL` in `.env`:
+
+   ```
+   DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/app_db
    ```
 
 3. **Run migrations** (none until you add models)
@@ -65,18 +68,33 @@ tests/                  # pytest suite
    - Readiness (DB check): http://localhost:8000/api/v1/health
    - Docs: http://localhost:8000/docs
 
-### Full Stack with Docker
+### Run API in Docker
 
-Update `.env` so `DATABASE_URL` uses the `db` service hostname:
+PostgreSQL stays **outside** Docker. Set `DATABASE_URL` in `.env`.
 
+The Docker image name and version live in **`docker-compose.yml`** only:
+
+```yaml
+image: your-dockerhub-username/fastapi-boilerplate:1.0.0
+build: .
 ```
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/app_db
-```
 
-Then:
+CI runs `docker compose build` and `docker compose push` — no extra tagging in the workflow.
+
+**On a server:**
 
 ```bash
-docker compose up --build
+cp .env.example .env   # set DATABASE_URL
+docker compose pull
+docker compose up -d
+```
+
+**Build and push locally** (same as CI):
+
+```bash
+docker login
+docker compose build
+docker compose push
 ```
 
 ### VS Code Debugging
@@ -93,7 +111,16 @@ Use the **API (uvicorn)** launch configuration in `.vscode/launch.json`. It runs
 | New migration | `pipenv run alembic revision -m "description"` |
 | Apply migrations | `pipenv run alembic upgrade head` |
 
-CI runs the same lint, format, and test steps on every push/PR to `main`.
+CI runs lint, format, and tests on every push/PR. On push to `main`/`master`, it logs into Docker Hub and runs `docker compose build` + `docker compose push`.
+
+### Docker Hub secrets
+
+| Secret | Description |
+|--------|-------------|
+| `DOCKERHUB_USERNAME` | Must match the username in `image:` inside `docker-compose.yml` |
+| `DOCKERHUB_TOKEN` | Docker Hub access token |
+
+Bump the version by editing the `image:` tag in `docker-compose.yml` (e.g. `1.0.0` → `1.0.1`).
 
 ## Adding Your First Model
 
