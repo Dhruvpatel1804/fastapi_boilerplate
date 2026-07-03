@@ -1,0 +1,13 @@
+---
+description: API and testing conventions
+globs: app/api/**,tests/**
+alwaysApply: false
+---
+
+# API and Testing
+
+- Mount new endpoints under `app/api/v1/endpoints/` and register in `app/api/v1/router.py`
+- Use `Depends(get_db)` from `app.api.deps` for database sessions
+- Override dependencies in tests via `app.dependency_overrides`
+- Use `pytest-asyncio` with `httpx.AsyncClient` and `ASGITransport`
+- One logical assertion focus per test; name tests `test_<behavior>`

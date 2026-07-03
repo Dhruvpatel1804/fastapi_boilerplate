@@ -1,0 +1,14 @@
+---
+description: Database and migration conventions
+globs: app/db/**,alembic/**
+alwaysApply: false
+---
+
+# Database Conventions
+
+- Use SQLAlchemy 2.x `Mapped` / `mapped_column` syntax for models
+- Place models in `app/db/models/` and import them in `app/db/base.py`
+- Use snake_case for table and column names
+- Write migrations manually — never use `alembic revision --autogenerate`
+- Create revisions with `pipenv run alembic revision -m "description"` and edit by hand
+- Alembic runs sync via `psycopg2`; the app uses async `asyncpg` — do not mix drivers in app code

@@ -1,0 +1,14 @@
+---
+description: Core coding standards for the FastAPI boilerplate
+alwaysApply: true
+---
+
+# Project Standards
+
+- Use the `app/` package layout: routes in `app/api/`, config in `app/core/`, DB in `app/db/`
+- Name Pydantic models in `app/schemas/`, not `pydanticValidators/`
+- Keep routes thin — delegate business logic to `app/services/` when adding domain code
+- Use type hints on all function signatures
+- Prefer async endpoints and `AsyncSession` for database access
+- Return standard FastAPI/Pydantic responses — no custom `{status_code, message, data}` envelopes
+- Import settings from `app.core.config`, never read `os.environ` directly in routes

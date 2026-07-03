@@ -1,21 +1,22 @@
 .env
-env
 .env.*
-transcribe.json
-.transcribe.json
-.vscode
-webhook_samples/
-*.bak
-*.dat
-*.dir
+!.env.example
 
-.extracode.py
-extracode.py
-
-**/__pycache__/
-*.pyc
 __pycache__/
+*.pyc
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
 
-# Ignore log files
+logs/
 *.log
 
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+.DS_Store
+*.bak

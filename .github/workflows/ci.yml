@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: app_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d app_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/app_db
+      ENVIRONMENT: test
+      LOG_LEVEL: WARNING
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Pipenv
+        run: pip install pipenv
+
+      - name: Install dependencies
+        run: pipenv install --dev --deploy
+
+      - name: Ruff lint
+        run: pipenv run ruff check .
+
+      - name: Ruff format check
+        run: pipenv run ruff format --check .
+
+      - name: Run tests
+        run: pipenv run pytest -v --cov=app --cov-report=term-missing

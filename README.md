@@ -1,147 +1,143 @@
-# FastAPI Backend Boilerplate
+# FastAPI Boilerplate
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.68.0%2B-green.svg)](https://fastapi.tiangolo.com/)
+Production-ready FastAPI skeleton for coding interviews and small projects.
 
-A scalable, production-ready FastAPI backend boilerplate that standardizes authentication, asynchronous processing, event-driven workflows, real-time communication, and email services. Designed to accelerate the development of robust APIs and microservices.
+## Tech Stack
 
-## 🚀 Features
+- Python 3.12
+- FastAPI
+- PostgreSQL 16
+- SQLAlchemy 2.x (async)
+- Alembic (manual migrations)
+- Pipenv
+- Ruff (lint + format)
+- pytest + GitHub Actions CI
 
-- **Authentication & Security**: JWT-based authentication with secure password hashing
-- **Asynchronous Processing**: Celery integration for background task processing
-- **Event-Driven Architecture**: Built-in support for event-driven workflows
-- **Real-Time Communication**: WebSocket support for real-time features
-- **Email Services**: Integrated email functionality for notifications and user communication
-- **Database Management**: SQLAlchemy with Alembic migrations for robust data handling
-- **API Documentation**: Auto-generated Swagger/OpenAPI documentation
-- **Validation**: Pydantic models for request/response validation
-- **CI/CD Ready**: Jenkins pipeline configuration included
-- **Docker Support**: Containerization ready with .dockerignore
-- **OTP System**: Built-in OTP (One-Time Password) functionality
-
-## 🛠 Tech Stack
-
-- **Framework**: FastAPI
-- **Database**: PostgreSQL / SQLite (configurable)
-- **ORM**: SQLAlchemy
-- **Migrations**: Alembic
-- **Task Queue**: Celery + Redis
-- **Validation**: Pydantic
-- **Authentication**: JWT (JSON Web Tokens)
-- **Email**: SMTP integration
-- **Testing**: Pytest (ready for integration)
-- **CI/CD**: Jenkins
-- **Containerization**: Docker
-
-## 📁 Project Structure
+## Project Structure
 
 ```
-fastapi_boilerplate/
-├── alembic/                 # Database migrations
-├── api/                     # API routes and endpoints
-├── core/                    # Core functionality (config, security)
-├── db/                      # Database models and session management
-├── pydanticValidators/      # Pydantic validation schemas
-├── service/                 # Business logic services
-├── util/                    # Utility functions (email, common helpers)
-├── worker/                  # Celery worker configuration and tasks
-├── main.py                  # Application entry point
-├── Pipfile                  # Dependency management
-├── alembic.ini             # Alembic configuration
-├── Jenkinsfile             # CI/CD pipeline
-└── example.env             # Environment variables template
+app/
+├── api/v1/endpoints/   # Route handlers
+├── core/               # Config, logging, exceptions
+└── db/                 # SQLAlchemy base + session
+alembic/                # Database migrations
+tests/                  # pytest suite
 ```
 
-## 🏁 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.8+
-- PostgreSQL or SQLite
-- Redis (for Celery tasks)
+- Python 3.12
+- [Pipenv](https://pipenv.pypa.io/)
+- Docker & Docker Compose (optional)
 
-### Installation
+### Local Development
 
-1. **Clone the repository**
+1. **Clone and configure**
+
    ```bash
-   git clone https://github.com/yourusername/fastapi-boilerplate.git
-   cd fastapi-boilerplate
+   cp .env.example .env
+   pipenv install --dev
    ```
 
-2. **Install dependencies**
+2. **Start PostgreSQL**
+
    ```bash
-   pipenv install
-   pipenv shell
+   docker compose up -d db
    ```
 
-3. **Environment Setup**
+3. **Run migrations** (none until you add models)
+
    ```bash
-   cp example.env .env
-   # Edit .env with your configuration
+   pipenv run alembic upgrade head
    ```
 
-4. **Database Setup**
+4. **Start the API**
+
    ```bash
-   # Run migrations
-   alembic upgrade head
+   pipenv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
 
-5. **Start the application**
-   ```bash
-   uvicorn main:app --reload
-   ```
+5. **Verify**
 
-6. **Start Celery Worker** (in a separate terminal)
-   ```bash
-   celery -A worker.celery_app worker --loglevel=info
-   ```
+   - Liveness: http://localhost:8000/health
+   - Readiness (DB check): http://localhost:8000/api/v1/health
+   - Docs: http://localhost:8000/docs
 
-The API will be available at `http://localhost:8000`
-API documentation at `http://localhost:8000/docs`
+### Full Stack with Docker
 
-## 🔧 Configuration
+Update `.env` so `DATABASE_URL` uses the `db` service hostname:
 
-Key environment variables:
-
-- `DATABASE_URL`: Database connection string
-- `SECRET_KEY`: JWT secret key
-- `REDIS_URL`: Redis connection URL
-- `SMTP_SERVER`: Email server configuration
-- `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`: Token expiration time
-
-
-## 🚀 Deployment
-
-### Docker
-
-```bash
-# Build the image
-docker build -t fastapi-boilerplate .
-
-# Run the container
-docker run -p 8000:8000 fastapi-boilerplate
+```
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/app_db
 ```
 
-### Production
-
-Use a production ASGI server like Gunicorn:
+Then:
 
 ```bash
-gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker
+docker compose up --build
 ```
 
-## 🤝 Contributing
+### VS Code Debugging
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Use the **API (uvicorn)** launch configuration in `.vscode/launch.json`. It runs on `0.0.0.0:8000` with hot reload.
 
-## 👨‍💻 Author
+## Development Workflow
 
-**Dhruv** - [Your GitHub](https://github.com/Dhruvpatel1804)
+| Task | Command |
+|------|---------|
+| Lint | `pipenv run ruff check .` |
+| Format | `pipenv run ruff format .` |
+| Test | `pipenv run pytest -v` |
+| New migration | `pipenv run alembic revision -m "description"` |
+| Apply migrations | `pipenv run alembic upgrade head` |
 
----
+CI runs the same lint, format, and test steps on every push/PR to `main`.
 
-⭐ If you found this project helpful, please give it a star!
+## Adding Your First Model
+
+1. Create `app/db/models/item.py`:
+
+   ```python
+   from sqlalchemy.orm import Mapped, mapped_column
+   from sqlalchemy import String
+   from app.db.base import Base
+
+   class Item(Base):
+       __tablename__ = "items"
+       id: Mapped[int] = mapped_column(primary_key=True)
+       name: Mapped[str] = mapped_column(String(255))
+   ```
+
+2. Import the model in `app/db/base.py` so Alembic sees it.
+
+3. Create a manual migration:
+
+   ```bash
+   pipenv run alembic revision -m "create_items_table"
+   ```
+
+4. Edit `alembic/versions/<rev>_create_items_table.py` by hand (no autogenerate).
+
+5. Apply: `pipenv run alembic upgrade head`
+
+## API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Liveness probe (no DB check) |
+| GET | `/api/v1/health` | Readiness probe (checks DB) |
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ENVIRONMENT` | Runtime environment | `development` |
+| `LOG_LEVEL` | Logging level | `INFO` |
+| `DATABASE_URL` | Async PostgreSQL URL (`postgresql+asyncpg://...`) | **required** |
+| `CORS_ORIGINS` | JSON list of allowed origins | `["http://localhost:3000"]` |
+
+## License
+
+MIT
